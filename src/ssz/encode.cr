@@ -35,3 +35,22 @@ struct Int
     io.write_bytes(self, IO::ByteFormat::LittleEndian)
   end
 end
+
+struct Bool
+  def ssz_variable? : Bool
+    false
+  end
+
+  def ssz_size : Int32
+    1
+  end
+
+  def ssz_encode : Bytes
+    Bytes[self ? 1_u8 : 0_u8]
+  end
+
+  def ssz_encode(io : IO)
+    byte = self ? 1_u8 : 0_u8
+    io.write_bytes(byte)
+  end
+end
