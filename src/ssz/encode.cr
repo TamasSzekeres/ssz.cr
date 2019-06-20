@@ -22,6 +22,23 @@ class Object
   end
 end
 
+struct Nil
+  def ssz_variable? : Bool
+    false
+  end
+
+  def ssz_size : Int32
+    0
+  end
+
+  def ssz_encode : Bytes
+    Bytes.empty
+  end
+
+  def ssz_encode(io : IO)
+  end
+end
+
 struct Int
   def ssz_variable? : Bool
     false

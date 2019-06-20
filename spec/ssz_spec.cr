@@ -1,6 +1,14 @@
 require "./spec_helper"
 
 describe SSZ do
+  describe Nil do
+    describe "ssz_encode" do
+      it "should encode nil" do
+        nil.ssz_encode.should eq(Bytes.empty)
+      end
+    end
+  end
+
   describe Int do
     describe "#ssz_encode" do
       it "should encode integer" do
