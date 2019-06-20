@@ -53,6 +53,20 @@ struct Int
   end
 end
 
+struct Char
+  def ssz_variable? : Bool
+    false
+  end
+
+  def ssz_size : Int32
+    sizeof(self)
+  end
+
+  def ssz_encode(io : IO)
+    ord.ssz_encode(io)
+  end
+end
+
 struct Bool
   def ssz_variable? : Bool
     false

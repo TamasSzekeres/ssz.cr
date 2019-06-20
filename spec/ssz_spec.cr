@@ -24,6 +24,17 @@ describe SSZ do
     end
   end
 
+  describe Char do
+    describe "#ssz_encode" do
+      it "should encode char" do
+        Char::ZERO.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
+        Char::MAX.ssz_encode.should eq(Bytes[0xff_u8, 0xff_u8, 0x10_u8, 0_u8])
+        'A'.ssz_encode.should eq(Bytes[65_u8, 0_u8, 0_u8, 0_u8])
+        '𐒙'.ssz_encode.should eq(Bytes[0x99_u8, 4_u8, 1_u8, 0_u8])
+      end
+    end
+  end
+
   describe Bool do
     describe "ssz_encode" do
       it "should encode boolean" do
