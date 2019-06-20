@@ -96,8 +96,6 @@ class String
   end
 
   def ssz_encode(io : IO)
-    each_char do |ch|
-      ch.ssz_encode(io)
-    end
+    each_char &.ssz_encode(io)
   end
 end
