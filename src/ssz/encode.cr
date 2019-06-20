@@ -85,3 +85,19 @@ struct Bool
     io.write_bytes(byte)
   end
 end
+
+class String
+  def ssz_variable? : Bool
+    true
+  end
+
+  def ssz_size : Int32
+    size * sizeof(Char)
+  end
+
+  def ssz_encode(io : IO)
+    each_char do |ch|
+      ch.ssz_encode(io)
+    end
+  end
+end

@@ -43,4 +43,12 @@ describe SSZ do
       end
     end
   end
+
+  describe String do
+    describe "ssz_encode" do
+      it "should encode string" do
+        "SSZ".ssz_encode.should eq(Bytes[83, 0, 0, 0, 83, 0, 0, 0, 90, 0, 0, 0])
+      end
+    end
+  end
 end
