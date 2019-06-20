@@ -51,4 +51,21 @@ describe SSZ do
       end
     end
   end
+
+  describe Array do
+    describe "#ssz_size" do
+      it "should calc encoded size" do
+        [1_i32, 24_i32].ssz_size.should eq(8)
+        [nil, 34_u8, false, 16_i16].ssz_size.should eq(4)
+        [0_u8, "AB", 0_u8].ssz_size.should eq(14)
+      end
+    end
+
+    describe "#ssz_encode" do
+      it "should encode array" do
+        [0x5c3e8b1f_i32, 0x637a_u16].ssz_encode.should eq(Bytes[0x1f_u8, 0x8b_u8, 0x3e_u8, 0x5c_u8, 0x7a_u8, 0x63_u8])
+        [0_u8, "AB", 0_u8].ssz_encode.should eq(Bytes[0, 6, 0, 0, 0, 0, 65, 0, 0, 0, 66, 0, 0, 0])
+      end
+    end
+  end
 end
