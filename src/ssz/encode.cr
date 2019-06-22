@@ -1,18 +1,22 @@
 require "./constants"
 
 class Object
+  @[NoInline]
   def ssz_variable? : Bool
     raise "Unimplemented method: " + {{@def.name.stringify}}
   end
 
+  @[NoInline]
   def ssz_fixed? : Bool
     !ssz_variable?
   end
 
+  @[NoInline]
   def ssz_size : Int32
     raise "Unimplemented method: " + {{@def.name.stringify}}
   end
 
+  @[NoInline]
   def ssz_encode : Bytes
     size = ssz_size
     io = IO::Memory.new(size)
@@ -23,6 +27,7 @@ class Object
     buffer
   end
 
+  @[NoInline]
   def ssz_encode(io : IO)
     raise "Unimplemented method: " + {{@def.name.stringify}}
   end
