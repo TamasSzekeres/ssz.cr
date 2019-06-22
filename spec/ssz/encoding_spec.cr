@@ -9,7 +9,7 @@ describe SSZ do
     end
   end
 
-  describe Int do
+  describe Number do
     describe "#ssz_encode" do
       it "should encode integer" do
         0x56_i8.ssz_encode.should eq(Bytes[0x56_u8])
@@ -20,6 +20,14 @@ describe SSZ do
         0x82cd9ab3_u32.ssz_encode.should eq(Bytes[0xb3_u8, 0x9a_u8, 0xcd_u8, 0x82_u8])
         0x61ac721f8e427211_i64.ssz_encode.should eq(Bytes[0x11_u8, 0x72_u8, 0x42_u8, 0x8e_u8, 0x1f_u8, 0x72_u8, 0xac_u8, 0x61_u8])
         0x92c87ce38e4292b7_u64.ssz_encode.should eq(Bytes[0xb7_u8, 0x92_u8, 0x42_u8, 0x8e_u8, 0xe3_u8, 0x7c_u8, 0xc8_u8, 0x92_u8])
+      end
+
+      it "should encode float" do
+        0_f32.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
+        12.34_f32.ssz_encode.should eq(Bytes[164_u8, 112_u8, 69_u8, 65_u8])
+
+        0_f64.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8])
+        12.34_f64.ssz_encode.should eq(Bytes[174_u8, 71_u8, 225_u8, 122_u8, 20_u8, 174_u8, 40_u8, 64_u8])
       end
     end
   end
@@ -62,6 +70,24 @@ describe SSZ do
     describe "ssz_encode" do
       it "should encode string" do
         "SSZ".ssz_encode.should eq(Bytes[83, 0, 0, 0, 83, 0, 0, 0, 90, 0, 0, 0])
+      end
+    end
+  end
+
+  describe Bytes do
+    describe "#ssz_encode" do
+      it "should encode bytes" do
+        Bytes.empty.ssz_encode.should eq(Bytes.empty)
+        Bytes[0_u8, 120_u8, 250_u8].ssz_encode.should eq(Bytes[0_u8, 120_u8, 250_u8])
+      end
+    end
+  end
+
+  describe Slice(Int16) do
+    describe "#ssz_encode" do
+      it "should encode slice" do
+        Slice(Int16).empty.ssz_encode.should eq(Bytes.empty)
+        Slice(Int16).new(3) { |i| (i + 10).to_i16 }.ssz_encode.should eq(Bytes[10_u8, 0_u8, 11_u8, 0_u8, 12_u8, 0_u8])
       end
     end
   end

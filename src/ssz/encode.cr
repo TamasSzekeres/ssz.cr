@@ -45,7 +45,7 @@ struct Nil
   end
 end
 
-struct Int
+struct Number
   def ssz_variable? : Bool
     false
   end
