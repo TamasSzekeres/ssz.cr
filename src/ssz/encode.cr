@@ -148,32 +148,3 @@ class String
     each_char &.ssz_encode(io)
   end
 end
-
-class Array
-  def ssz_variable? : Bool
-    true
-  end
-
-  def ssz_size : Int32
-    reduce(0) do |acc, element|
-      acc + element.ssz_size + (element.ssz_variable? ? SSZ::BYTES_PER_LENGTH_OFFSET : 0)
-    end
-  end
-
-  def ssz_encode(io : IO)
-    fixed_parts = map { |element| element.ssz_fixed? ? element : nil }
-    variable_parts = map { |element| element.ssz_variable? ? element : nil }
-
-    fixed_lengths = fixed_parts.map { |part| part.nil? ? SSZ::BYTES_PER_LENGTH_OFFSET : part.ssz_size }
-    variable_lengths = variable_parts.map &.ssz_size
-
-    sum_fixed_lengths = fixed_lengths.sum
-    variable_offsets = map_with_index do |e, i|
-      (sum_fixed_lengths + variable_lengths.first(i).sum).as(SSZ::Offset)
-    end
-    fixed_parts = fixed_parts.map_with_index { |part, i| part.nil? ? variable_offsets[i] : part }
-
-    fixed_parts.each &.ssz_encode(io)
-    variable_parts.each &.ssz_encode(io)
-  end
-end
