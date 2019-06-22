@@ -106,7 +106,7 @@ struct Bool
   end
 end
 
-module Indexable(T)
+module Enumerable(T)
   def ssz_variable? : Bool
     true
   end

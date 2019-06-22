@@ -108,4 +108,13 @@ describe SSZ do
       end
     end
   end
+
+  describe Set do
+    describe "#ssz_encode" do
+      it "should encode set" do
+        Set{1, 2}.ssz_encode.should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 2_u8, 0_u8, 0_u8, 0_u8])
+        Set{101_u8, 22_u8}.ssz_encode.should eq(Bytes[101_u8, 22_u8])
+      end
+    end
+  end
 end
