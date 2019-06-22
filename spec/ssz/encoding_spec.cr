@@ -24,6 +24,20 @@ describe SSZ do
     end
   end
 
+  describe Enum do
+    describe "#ssz_encode" do
+      it "should encode enum" do
+        Color::Red.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
+        Color::Green.ssz_encode.should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8])
+        Color::Blue.ssz_encode.should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8])
+
+        Direction::None.ssz_encode.should eq(Bytes[0_u8])
+        Direction::Left.ssz_encode.should eq(Bytes[10_u8])
+        Direction::Down.ssz_encode.should eq(Bytes[13_u8])
+      end
+    end
+  end
+
   describe Char do
     describe "#ssz_encode" do
       it "should encode char" do

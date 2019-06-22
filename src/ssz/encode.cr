@@ -59,6 +59,20 @@ struct Int
   end
 end
 
+struct Enum
+  def ssz_variable? : Bool
+    false
+  end
+
+  def ssz_size : Int32
+    sizeof(self)
+  end
+
+  def ssz_encode(io : IO)
+    io.write_bytes(value, IO::ByteFormat::LittleEndian)
+  end
+end
+
 struct Char
   def ssz_variable? : Bool
     false
