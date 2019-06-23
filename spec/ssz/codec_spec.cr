@@ -402,4 +402,44 @@ describe SSZ do
       end
     end
   end
+
+  describe Union do
+    describe "#ssz_variable?" do
+      it "should always return true" do
+        Union1.ssz_variable?.should be_true
+        Union2.ssz_variable?.should be_true
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return false" do
+        Union1.ssz_fixed?.should be_false
+        Union2.ssz_fixed?.should be_false
+      end
+    end
+
+    describe "#ssz_size" do
+      Union1.ssz_size(false).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 1)
+      Union1.ssz_size(0_u16).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 2)
+      Union1.ssz_size(0_i32).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 4)
+
+      Union2.ssz_size(nil).should eq(SSZ::BYTES_PER_LENGTH_OFFSET)
+      Union2.ssz_size(0_u8).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 1)
+      Union2.ssz_size("ABC").should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 3)
+    end
+
+    describe "#ssz_encode" do
+      it "should encode Union1" do
+        Union1.ssz_encode(true).should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 1_u8])
+        Union1.ssz_encode(1024_u16).should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8, 0_u8, 4_u8])
+        Union1.ssz_encode(2048_i32).should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 0_u8, 8_u8, 0_u8, 0_u8])
+      end
+
+      it "should encode Union2" do
+        Union2.ssz_encode(nil).should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8])
+        Union2.ssz_encode(32_u8).should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 32_u8])
+        Union2.ssz_encode("ABC").should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 65_u8, 66_u8, 67_u8])
+      end
+    end
+  end
 end

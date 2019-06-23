@@ -12,3 +12,6 @@ enum Direction : UInt8
   Right = 12
   Down  = 13
 end
+
+alias Union1 = Bool | UInt16 | Int32
+alias Union2 = (UInt8 | String)?

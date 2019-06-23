@@ -32,7 +32,7 @@ class Object
     raise "Unimplemented method: " + {{@def.name.stringify}}
   end
 
-  def self.ssz_decode(io : IO)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
     raise "Unimplemented method: " + {{@def.name.stringify}}
   end
 
@@ -57,7 +57,7 @@ struct Nil
   def ssz_encode(io : IO)
   end
 
-  def self.ssz_decode(bytes : Bytes)
+  def self.ssz_decode(bytes : Bytes, size : Int32 = 0)
     nil
   end
 
@@ -79,7 +79,7 @@ struct Number
     io.write_bytes(self, IO::ByteFormat::LittleEndian)
   end
 
-  def self.ssz_decode(io : IO)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
     from_io(io, IO::ByteFormat::LittleEndian)
   end
 end
@@ -97,7 +97,7 @@ struct Enum
     io.write_bytes(value, IO::ByteFormat::LittleEndian)
   end
 
-  def self.ssz_decode(io : IO)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
     new io.read_bytes(values.first.value.class, IO::ByteFormat::LittleEndian)
   end
 end
@@ -115,7 +115,7 @@ struct Char
     ord.ssz_encode(io)
   end
 
-  def self.ssz_decode(io : IO)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
     Int32.from_io(io, IO::ByteFormat::LittleEndian).unsafe_chr
   end
 end
@@ -142,7 +142,7 @@ struct Bool
     bytes[0] != 0_u8
   end
 
-  def self.ssz_decode(io : IO)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
     io.read_byte.not_nil! != 0_u8
   end
 end
@@ -197,7 +197,50 @@ class String
     new(bytes)
   end
 
-  def self.ssz_decode(io : IO, size : Int32)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
     io.read_string(size)
+  end
+end
+
+struct Union
+  def self.ssz_variable? : Bool
+    true
+  end
+
+  def self.ssz_fixed? : Bool
+    false
+  end
+
+  def self.ssz_size(value : self) : Int32
+    SSZ::BYTES_PER_LENGTH_OFFSET + value.ssz_size
+  end
+
+  def self.ssz_encode(value : self) : Bytes
+    size = self.ssz_size(value)
+    io = IO::Memory.new(size)
+    self.ssz_encode(io, value)
+    buffer = Bytes.new(size)
+    io.seek(-size, IO::Seek::Current)
+    io.read_fully(buffer)
+    buffer
+  end
+
+  def self.ssz_encode(io : IO, value : self)
+    {% for utype, i in @type.union_types %}
+    if value.is_a?({{utype}})
+      {{i}}.as(SSZ::Offset).ssz_encode(io)
+      value.ssz_encode(io)
+      return
+    end
+    {% end %}
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    type_index = SSZ::Offset.ssz_decode(io)
+    {% for utype, i in @type.union_types %}
+    if type_index == {{i}}
+      return {{utype}}.ssz_decode(io, size - SSZ::BYTES_PER_LENGTH_OFFSET)
+    end
+    {% end %}
   end
 end
