@@ -1,4 +1,4 @@
-require "./encode"
+require "./codec"
 
 module SSZ
   annotation Field
