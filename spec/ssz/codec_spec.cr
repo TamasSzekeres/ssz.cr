@@ -182,6 +182,27 @@ describe SSZ do
   end
 
   describe Enum do
+    describe "#ssz_variable?" do
+      it "should always return false" do
+        Color::Red.ssz_variable?.should be_false
+        Direction::Right.ssz_variable?.should be_false
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true" do
+        Color::Red.ssz_fixed?.should be_true
+        Direction::Right.ssz_fixed?.should be_true
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        Color::Red.ssz_size.should eq(4)
+        Direction::Right.ssz_size.should eq(1)
+      end
+    end
+
     describe "#ssz_encode" do
       it "should encode enum" do
         Color::Red.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
@@ -191,6 +212,24 @@ describe SSZ do
         Direction::None.ssz_encode.should eq(Bytes[0_u8])
         Direction::Left.ssz_encode.should eq(Bytes[10_u8])
         Direction::Down.ssz_encode.should eq(Bytes[13_u8])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode enum" do
+        bytes = Bytes[2_u8, 0_u8, 0_u8, 0_u8]
+        io = IO::Memory.new(bytes)
+        Color.ssz_decode(io).should eq(Color::Blue)
+        io.pos.should eq(4)
+
+        Color.ssz_decode(bytes).should eq(Color::Blue)
+
+        bytes = Bytes[10_u8]
+        io = IO::Memory.new(bytes)
+        Direction.ssz_decode(io).should eq(Direction::Left)
+        io.pos.should eq(1)
+
+        Direction.ssz_decode(bytes).should eq(Direction::Left)
       end
     end
   end
