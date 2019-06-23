@@ -31,6 +31,14 @@ class Object
   def ssz_encode(io : IO)
     raise "Unimplemented method: " + {{@def.name.stringify}}
   end
+
+  def self.ssz_decode(io : IO)
+    raise "Unimplemented method: " + {{@def.name.stringify}}
+  end
+
+  def self.ssz_decode(bytes : Bytes)
+    self.ssz_decode(IO::Memory.new(bytes))
+  end
 end
 
 struct Nil
@@ -47,6 +55,14 @@ struct Nil
   end
 
   def ssz_encode(io : IO)
+  end
+
+  def self.ssz_decode(bytes : Bytes)
+    nil
+  end
+
+  def self.ssz_decode(io : IO)
+    nil
   end
 end
 

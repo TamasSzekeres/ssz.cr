@@ -2,9 +2,42 @@ require "../spec_helper"
 
 describe SSZ do
   describe Nil do
-    describe "ssz_encode" do
+    describe "#ssz_variable?" do
+      it "should always return false" do
+        nil.ssz_variable?.should be_false
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true" do
+        nil.ssz_fixed?.should be_true
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should always return 0" do
+        nil.ssz_size.should eq(0)
+      end
+    end
+
+    describe "#ssz_encode" do
       it "should encode nil" do
+        io = IO::Memory.new()
+        nil.ssz_encode(io)
+        io.pos.should eq(0)
+
         nil.ssz_encode.should eq(Bytes.empty)
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should always return nil" do
+        bytes = Bytes[0_u8, 1_u8]
+        io = IO::Memory.new(bytes)
+        Nil.ssz_decode(io).should eq(nil)
+        io.pos.should eq(0)
+
+        Nil.ssz_decode(bytes).should eq(nil)
       end
     end
   end
