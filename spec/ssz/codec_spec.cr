@@ -43,6 +43,48 @@ describe SSZ do
   end
 
   describe Number do
+    describe "#ssz_variable?" do
+      it "should always return false" do
+        0_i8.ssz_variable?.should be_false
+        0_i16.ssz_variable?.should be_false
+        0_i32.ssz_variable?.should be_false
+        0_u8.ssz_variable?.should be_false
+        0_u16.ssz_variable?.should be_false
+        0_u32.ssz_variable?.should be_false
+
+        0.0_f32.ssz_variable?.should be_false
+        0.0_f64.ssz_variable?.should be_false
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true" do
+        0_i8.ssz_fixed?.should be_true
+        0_i16.ssz_fixed?.should be_true
+        0_i32.ssz_fixed?.should be_true
+        0_u8.ssz_fixed?.should be_true
+        0_u16.ssz_fixed?.should be_true
+        0_u32.ssz_fixed?.should be_true
+
+        0.0_f32.ssz_fixed?.should be_true
+        0.0_f64.ssz_fixed?.should be_true
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        0_i8.ssz_size.should eq(1)
+        0_i16.ssz_size.should eq(2)
+        0_i32.ssz_size.should eq(4)
+        0_u8.ssz_size.should eq(1)
+        0_u16.ssz_size.should eq(2)
+        0_u32.ssz_size.should eq(4)
+
+        0.0_f32.ssz_size.should eq(4)
+        0.0_f64.ssz_size.should eq(8)
+      end
+    end
+
     describe "#ssz_encode" do
       it "should encode integer" do
         0x56_i8.ssz_encode.should eq(Bytes[0x56_u8])
@@ -61,6 +103,80 @@ describe SSZ do
 
         0_f64.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8])
         12.34_f64.ssz_encode.should eq(Bytes[174_u8, 71_u8, 225_u8, 122_u8, 20_u8, 174_u8, 40_u8, 64_u8])
+      end
+    end
+
+    describe "#ssz_encode" do
+      it "should decode Int8" do
+        bytes = Bytes[120_u8]
+        io = IO::Memory.new(bytes)
+        Int8.ssz_decode(io).should eq(120_i8)
+        io.pos.should eq(1)
+
+        Int8.ssz_decode(bytes).should eq(120_i8)
+      end
+
+      it "should decode Int16" do
+        bytes = Bytes[0x12_u8, 0x11_u8]
+        io = IO::Memory.new(bytes)
+        Int16.ssz_decode(io).should eq(4370_i16)
+        io.pos.should eq(2)
+
+        Int16.ssz_decode(bytes).should eq(4370_i16)
+      end
+
+      it "should decode Int32" do
+        bytes = Bytes[0x12_u8, 0x11_u8, 0x10_u8, 0x5_u8]
+        io = IO::Memory.new(bytes)
+        Int32.ssz_decode(io).should eq(84939026_i32)
+        io.pos.should eq(4)
+
+        Int32.ssz_decode(bytes).should eq(84939026_i32)
+      end
+
+      it "should decode UInt8" do
+        bytes = Bytes[120_u8]
+        io = IO::Memory.new(bytes)
+        UInt8.ssz_decode(io).should eq(120_u8)
+        io.pos.should eq(1)
+
+        UInt8.ssz_decode(bytes).should eq(120_u8)
+      end
+
+      it "should decode UInt16" do
+        bytes = Bytes[0x12_u8, 0x11_u8]
+        io = IO::Memory.new(bytes)
+        UInt16.ssz_decode(io).should eq(4370_u16)
+        io.pos.should eq(2)
+
+        UInt16.ssz_decode(bytes).should eq(4370_u16)
+      end
+
+      it "should decode UInt32" do
+        bytes = Bytes[0x12_u8, 0x11_u8, 0x10_u8, 0x5_u8]
+        io = IO::Memory.new(bytes)
+        UInt32.ssz_decode(io).should eq(84939026_u32)
+        io.pos.should eq(4)
+
+        UInt32.ssz_decode(bytes).should eq(84939026_u32)
+      end
+
+      it "should decode Float32" do
+        bytes = Bytes[164_u8, 112_u8, 69_u8, 65_u8]
+        io = IO::Memory.new(bytes)
+        Float32.ssz_decode(io).should eq(12.34_f32)
+        io.pos.should eq(4)
+
+        Float32.ssz_decode(bytes).should eq(12.34_f32)
+      end
+
+      it "should decode Float64" do
+        bytes = Bytes[174_u8, 71_u8, 225_u8, 122_u8, 20_u8, 174_u8, 40_u8, 64_u8]
+        io = IO::Memory.new(bytes)
+        Float64.ssz_decode(io).should eq(12.34_f64)
+        io.pos.should eq(8)
+
+        Float64.ssz_decode(bytes).should eq(12.34_f64)
       end
     end
   end

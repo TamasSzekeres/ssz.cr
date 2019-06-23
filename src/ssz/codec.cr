@@ -78,6 +78,10 @@ struct Number
   def ssz_encode(io : IO)
     io.write_bytes(self, IO::ByteFormat::LittleEndian)
   end
+
+  def self.ssz_decode(io : IO)
+    from_io(io, IO::ByteFormat::LittleEndian)
+  end
 end
 
 struct Enum
