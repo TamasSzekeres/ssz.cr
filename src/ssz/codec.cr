@@ -182,10 +182,14 @@ class String
   end
 
   def ssz_size : Int32
-    size * sizeof(Char)
+    bytesize
+  end
+
+  def ssz_encode : Bytes
+    Bytes.new(bytes.to_unsafe, bytesize)
   end
 
   def ssz_encode(io : IO)
-    each_char &.ssz_encode(io)
+    bytes.ssz_encode(io)
   end
 end

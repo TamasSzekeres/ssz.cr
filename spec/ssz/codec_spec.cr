@@ -331,9 +331,31 @@ describe SSZ do
   end
 
   describe String do
-    describe "ssz_encode" do
+    describe "#ssz_variable?" do
+      it "should always return true" do
+        "ABC".ssz_variable?.should be_true
+        "A𐒙".ssz_variable?.should be_true
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return false" do
+        "ABC".ssz_fixed?.should be_false
+        "A𐒙".ssz_fixed?.should be_false
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        "ABC".ssz_size.should eq(3)
+        "A𐒙".ssz_size.should eq(5)
+      end
+    end
+
+    describe "#ssz_encode" do
       it "should encode string" do
-        "SSZ".ssz_encode.should eq(Bytes[83, 0, 0, 0, 83, 0, 0, 0, 90, 0, 0, 0])
+        "ABC".ssz_encode.should eq(Bytes[65, 66, 67])
+        "A𐒙".ssz_encode.should eq(Bytes[65, 240, 144, 146, 153])
       end
     end
   end
@@ -352,23 +374,6 @@ describe SSZ do
       it "should encode slice" do
         Slice(Int16).empty.ssz_encode.should eq(Bytes.empty)
         Slice(Int16).new(3) { |i| (i + 10).to_i16 }.ssz_encode.should eq(Bytes[10_u8, 0_u8, 11_u8, 0_u8, 12_u8, 0_u8])
-      end
-    end
-  end
-
-  describe Array do
-    describe "#ssz_size" do
-      it "should calc encoded size" do
-        [1_i32, 24_i32].ssz_size.should eq(8)
-        [nil, 34_u8, false, 16_i16].ssz_size.should eq(4)
-        [0_u8, "AB", 0_u8].ssz_size.should eq(14)
-      end
-    end
-
-    describe "#ssz_encode" do
-      it "should encode array" do
-        [0x5c3e8b1f_i32, 0x637a_u16].ssz_encode.should eq(Bytes[0x1f_u8, 0x8b_u8, 0x3e_u8, 0x5c_u8, 0x7a_u8, 0x63_u8])
-        [0_u8, "AB", 0_u8].ssz_encode.should eq(Bytes[0, 6, 0, 0, 0, 0, 65, 0, 0, 0, 66, 0, 0, 0])
       end
     end
   end
