@@ -114,6 +114,10 @@ struct Char
   def ssz_encode(io : IO)
     ord.ssz_encode(io)
   end
+
+  def self.ssz_decode(io : IO)
+    Int32.from_io(io, IO::ByteFormat::LittleEndian).unsafe_chr
+  end
 end
 
 struct Bool

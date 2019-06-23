@@ -235,12 +235,51 @@ describe SSZ do
   end
 
   describe Char do
+    describe "#ssz_variable?" do
+      it "should always return false" do
+        'A'.ssz_variable?.should be_false
+        '𐒙'.ssz_variable?.should be_false
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true" do
+        'A'.ssz_fixed?.should be_true
+        '𐒙'.ssz_fixed?.should be_true
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should always return 4" do
+        'A'.ssz_size.should eq(4)
+        '𐒙'.ssz_size.should eq(4)
+      end
+    end
+
     describe "#ssz_encode" do
       it "should encode char" do
         Char::ZERO.ssz_encode.should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
         Char::MAX.ssz_encode.should eq(Bytes[0xff_u8, 0xff_u8, 0x10_u8, 0_u8])
         'A'.ssz_encode.should eq(Bytes[65_u8, 0_u8, 0_u8, 0_u8])
         '𐒙'.ssz_encode.should eq(Bytes[0x99_u8, 4_u8, 1_u8, 0_u8])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode char" do
+        bytes = Bytes[65_u8, 0_u8, 0_u8, 0_u8]
+        io = IO::Memory.new(bytes)
+        Char.ssz_decode(io).should eq('A')
+        io.pos.should eq(4)
+
+        Char.ssz_decode(bytes).should eq('A')
+
+        bytes = Bytes[0x99_u8, 4_u8, 1_u8, 0_u8]
+        io = IO::Memory.new(bytes)
+        Char.ssz_decode(io).should eq('𐒙')
+        io.pos.should eq(4)
+
+        Char.ssz_decode(bytes).should eq('𐒙')
       end
     end
   end
