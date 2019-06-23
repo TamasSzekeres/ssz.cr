@@ -358,6 +358,22 @@ describe SSZ do
         "A𐒙".ssz_encode.should eq(Bytes[65, 240, 144, 146, 153])
       end
     end
+
+    describe "#ssz_decode" do
+      it "should decode string" do
+        bytes = Bytes[65, 66, 67]
+        io = IO::Memory.new(bytes)
+        String.ssz_decode(io, 3).should eq("ABC")
+        io.pos.should eq(3)
+        String.ssz_decode(bytes).should eq("ABC")
+
+        bytes = Bytes[65, 240, 144, 146, 153]
+        io = IO::Memory.new(bytes)
+        String.ssz_decode(io, 5).should eq("A𐒙")
+        io.pos.should eq(5)
+        String.ssz_decode(bytes).should eq("A𐒙")
+      end
+    end
   end
 
   describe Bytes do

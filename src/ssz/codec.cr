@@ -192,4 +192,12 @@ class String
   def ssz_encode(io : IO)
     bytes.ssz_encode(io)
   end
+
+  def self.ssz_decode(bytes : Bytes)
+    new(bytes)
+  end
+
+  def self.ssz_decode(io : IO, size : Int32)
+    io.read_string(size)
+  end
 end
