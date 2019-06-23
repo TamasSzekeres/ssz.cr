@@ -137,6 +137,14 @@ struct Bool
     byte = self ? 1_u8 : 0_u8
     io.write_bytes(byte)
   end
+
+  def self.ssz_decode(bytes : Bytes)
+    bytes[0] != 0_u8
+  end
+
+  def self.ssz_decode(io : IO)
+    io.read_byte.not_nil! != 0_u8
+  end
 end
 
 module Enumerable(T)

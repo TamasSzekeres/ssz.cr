@@ -285,10 +285,47 @@ describe SSZ do
   end
 
   describe Bool do
-    describe "ssz_encode" do
+    describe "#ssz_variable?" do
+      it "should always return false" do
+        false.ssz_variable?.should be_false
+        true.ssz_variable?.should be_false
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true" do
+        false.ssz_fixed?.should be_true
+        true.ssz_fixed?.should be_true
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should always return 1" do
+        false.ssz_size.should eq(1)
+        true.ssz_size.should eq(1)
+      end
+    end
+
+    describe "#ssz_encode" do
       it "should encode boolean" do
-        true.ssz_encode.should eq(Bytes[1_u8])
         false.ssz_encode.should eq(Bytes[0_u8])
+        true.ssz_encode.should eq(Bytes[1_u8])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode boolean" do
+        bytes = Bytes[0_u8]
+        io = IO::Memory.new(bytes)
+        Bool.ssz_decode(io).should eq(false)
+        io.pos.should eq(1)
+        Bool.ssz_decode(bytes).should eq(false)
+
+        bytes = Bytes[1_u8]
+        io = IO::Memory.new(bytes)
+        Bool.ssz_decode(io).should eq(true)
+        io.pos.should eq(1)
+        Bool.ssz_decode(bytes).should eq(true)
       end
     end
   end
