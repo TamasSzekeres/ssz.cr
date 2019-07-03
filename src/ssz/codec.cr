@@ -155,7 +155,7 @@ module Enumerable(T)
   def ssz_size : Int32
     {% if T.union? %}
       reduce(0) do |acc, element|
-        acc + element.ssz_size + SSZ::BYTES_PER_LENGTH_OFFSET
+        acc + T.ssz_size(element) + SSZ::BYTES_PER_LENGTH_OFFSET
       end
     {% else%}
       reduce(0) do |acc, element|
@@ -169,10 +169,10 @@ module Enumerable(T)
       offset = (size * sizeof(SSZ::Offset)).as(SSZ::Offset)
       each_with_index do |element, i|
         offset.ssz_encode(io)
-        offset += element.ssz_size
+        offset += T.ssz_size(element)
       end
       each_with_index do |element, i|
-        element.ssz_encode(io)
+        T.ssz_encode(io, element)
       end
     {% else %}
       fixed_parts = map { |element| element.ssz_fixed? ? element : nil }
@@ -189,6 +189,23 @@ module Enumerable(T)
 
       fixed_parts.each &.ssz_encode(io)
       variable_parts.each &.ssz_encode(io)
+    {% end %}
+  end
+end
+
+class Array(T)
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    {% if T.union? %}
+      offsets = [SSZ::Offset.ssz_decode(io).to_i32]
+      while offsets.size * SSZ::BYTES_PER_LENGTH_OFFSET < offsets.first
+        offsets.push(SSZ::Offset.ssz_decode(io).to_i32)
+      end
+      offsets.map_with_index do |offset, i|
+        io.pos = offset
+        next_offset = (i < offsets.size - 1) ? offsets[i + 1] : size - offsets.last
+        T.ssz_decode(io, next_offset - offset)
+      end
+    {% else %}
     {% end %}
   end
 end
