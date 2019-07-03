@@ -2,8 +2,18 @@ require "./constants"
 
 class Object
   @[NoInline]
+  def self.ssz_variable? : Bool
+    raise "Unimplemented method: " + {{@def.name.stringify}}
+  end
+
+  @[NoInline]
   def ssz_variable? : Bool
     raise "Unimplemented method: " + {{@def.name.stringify}}
+  end
+
+  @[NoInline]
+  def self.ssz_fixed? : Bool
+    !self.ssz_variable?
   end
 
   @[NoInline]
@@ -42,6 +52,10 @@ class Object
 end
 
 struct Nil
+  def self.ssz_variable? : Bool
+    false
+  end
+
   def ssz_variable? : Bool
     false
   end
@@ -67,6 +81,10 @@ struct Nil
 end
 
 struct Number
+  def self.ssz_variable? : Bool
+    false
+  end
+
   def ssz_variable? : Bool
     false
   end
@@ -85,6 +103,10 @@ struct Number
 end
 
 struct Enum
+  def self.ssz_variable? : Bool
+    false
+  end
+
   def ssz_variable? : Bool
     false
   end
@@ -103,12 +125,16 @@ struct Enum
 end
 
 struct Char
+  def self.ssz_variable? : Bool
+    false
+  end
+
   def ssz_variable? : Bool
     false
   end
 
   def ssz_size : Int32
-    sizeof(self)
+    sizeof(Char)
   end
 
   def ssz_encode(io : IO)
@@ -121,6 +147,10 @@ struct Char
 end
 
 struct Bool
+  def self.ssz_variable? : Bool
+    false
+  end
+
   def ssz_variable? : Bool
     false
   end
@@ -211,6 +241,10 @@ class Array(T)
 end
 
 class String
+  def self.ssz_variable? : Bool
+    true
+  end
+
   def ssz_variable? : Bool
     true
   end

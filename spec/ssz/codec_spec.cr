@@ -4,12 +4,14 @@ describe SSZ do
   describe Nil do
     describe "#ssz_variable?" do
       it "should always return false" do
+        Nil.ssz_variable?.should be_false
         nil.ssz_variable?.should be_false
       end
     end
 
     describe "#ssz_fixed?" do
       it "should always return true" do
+        Nil.ssz_fixed?.should be_true
         nil.ssz_fixed?.should be_true
       end
     end
@@ -45,28 +47,68 @@ describe SSZ do
   describe Number do
     describe "#ssz_variable?" do
       it "should always return false" do
+        Int8.ssz_variable?.should be_false
         0_i8.ssz_variable?.should be_false
+
+        Int16.ssz_variable?.should be_false
         0_i16.ssz_variable?.should be_false
+
+        Int32.ssz_variable?.should be_false
         0_i32.ssz_variable?.should be_false
+
+        Int64.ssz_variable?.should be_false
+        0_i64.ssz_variable?.should be_false
+
+        UInt8.ssz_variable?.should be_false
         0_u8.ssz_variable?.should be_false
+
+        UInt16.ssz_variable?.should be_false
         0_u16.ssz_variable?.should be_false
+
+        UInt32.ssz_variable?.should be_false
         0_u32.ssz_variable?.should be_false
 
+        UInt64.ssz_variable?.should be_false
+        0_u64.ssz_variable?.should be_false
+
+        Float32.ssz_variable?.should be_false
         0.0_f32.ssz_variable?.should be_false
+
+        Float64.ssz_variable?.should be_false
         0.0_f64.ssz_variable?.should be_false
       end
     end
 
     describe "#ssz_fixed?" do
       it "should always return true" do
+        Int8.ssz_fixed?.should be_true
         0_i8.ssz_fixed?.should be_true
+
+        Int16.ssz_fixed?.should be_true
         0_i16.ssz_fixed?.should be_true
+
+        Int32.ssz_fixed?.should be_true
         0_i32.ssz_fixed?.should be_true
+
+        Int64.ssz_fixed?.should be_true
+        0_i64.ssz_fixed?.should be_true
+
+        UInt8.ssz_fixed?.should be_true
         0_u8.ssz_fixed?.should be_true
+
+        UInt16.ssz_fixed?.should be_true
         0_u16.ssz_fixed?.should be_true
+
+        UInt32.ssz_fixed?.should be_true
         0_u32.ssz_fixed?.should be_true
 
+        UInt64.ssz_fixed?.should be_true
+        0_u64.ssz_fixed?.should be_true
+
+        Float32.ssz_fixed?.should be_true
         0.0_f32.ssz_fixed?.should be_true
+
+        Float64.ssz_fixed?.should be_true
         0.0_f64.ssz_fixed?.should be_true
       end
     end
@@ -76,9 +118,11 @@ describe SSZ do
         0_i8.ssz_size.should eq(1)
         0_i16.ssz_size.should eq(2)
         0_i32.ssz_size.should eq(4)
+        0_i64.ssz_size.should eq(8)
         0_u8.ssz_size.should eq(1)
         0_u16.ssz_size.should eq(2)
         0_u32.ssz_size.should eq(4)
+        0_u64.ssz_size.should eq(8)
 
         0.0_f32.ssz_size.should eq(4)
         0.0_f64.ssz_size.should eq(8)
@@ -134,6 +178,15 @@ describe SSZ do
         Int32.ssz_decode(bytes).should eq(84939026_i32)
       end
 
+      it "should decode Int64" do
+        bytes = Bytes[0x11_u8, 0x72_u8, 0x42_u8, 0x8e_u8, 0x1f_u8, 0x72_u8, 0xac_u8, 0x61_u8]
+        io = IO::Memory.new(bytes)
+        Int64.ssz_decode(io).should eq(0x61ac721f8e427211_i64)
+        io.pos.should eq(8)
+
+        Int64.ssz_decode(bytes).should eq(0x61ac721f8e427211_i64)
+      end
+
       it "should decode UInt8" do
         bytes = Bytes[120_u8]
         io = IO::Memory.new(bytes)
@@ -161,6 +214,15 @@ describe SSZ do
         UInt32.ssz_decode(bytes).should eq(84939026_u32)
       end
 
+      it "should decode UInt64" do
+        bytes = Bytes[0xb7_u8, 0x92_u8, 0x42_u8, 0x8e_u8, 0xe3_u8, 0x7c_u8, 0xc8_u8, 0x92_u8]
+        io = IO::Memory.new(bytes)
+        UInt64.ssz_decode(io).should eq(0x92c87ce38e4292b7_u64)
+        io.pos.should eq(8)
+
+        UInt64.ssz_decode(bytes).should eq(0x92c87ce38e4292b7_u64)
+      end
+
       it "should decode Float32" do
         bytes = Bytes[164_u8, 112_u8, 69_u8, 65_u8]
         io = IO::Memory.new(bytes)
@@ -184,14 +246,20 @@ describe SSZ do
   describe Enum do
     describe "#ssz_variable?" do
       it "should always return false" do
+        Color.ssz_variable?.should be_false
         Color::Red.ssz_variable?.should be_false
+
+        Direction.ssz_variable?.should be_false
         Direction::Right.ssz_variable?.should be_false
       end
     end
 
     describe "#ssz_fixed?" do
       it "should always return true" do
+        Color.ssz_fixed?.should be_true
         Color::Red.ssz_fixed?.should be_true
+
+        Direction.ssz_fixed?.should be_true
         Direction::Right.ssz_fixed?.should be_true
       end
     end
@@ -237,6 +305,7 @@ describe SSZ do
   describe Char do
     describe "#ssz_variable?" do
       it "should always return false" do
+        Char.ssz_variable?.should be_false
         'A'.ssz_variable?.should be_false
         '𐒙'.ssz_variable?.should be_false
       end
@@ -244,6 +313,7 @@ describe SSZ do
 
     describe "#ssz_fixed?" do
       it "should always return true" do
+        Char.ssz_fixed?.should be_true
         'A'.ssz_fixed?.should be_true
         '𐒙'.ssz_fixed?.should be_true
       end
@@ -287,6 +357,7 @@ describe SSZ do
   describe Bool do
     describe "#ssz_variable?" do
       it "should always return false" do
+        Bool.ssz_variable?.should be_false
         false.ssz_variable?.should be_false
         true.ssz_variable?.should be_false
       end
@@ -294,6 +365,7 @@ describe SSZ do
 
     describe "#ssz_fixed?" do
       it "should always return true" do
+        Bool.ssz_fixed?.should be_true
         false.ssz_fixed?.should be_true
         true.ssz_fixed?.should be_true
       end
@@ -333,6 +405,7 @@ describe SSZ do
   describe String do
     describe "#ssz_variable?" do
       it "should always return true" do
+        String.ssz_variable?.should be_true
         "ABC".ssz_variable?.should be_true
         "A𐒙".ssz_variable?.should be_true
       end
@@ -340,6 +413,7 @@ describe SSZ do
 
     describe "#ssz_fixed?" do
       it "should always return false" do
+        String.ssz_fixed?.should be_false
         "ABC".ssz_fixed?.should be_false
         "A𐒙".ssz_fixed?.should be_false
       end
