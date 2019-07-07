@@ -493,13 +493,15 @@ describe SSZ do
     end
 
     describe "#ssz_size" do
-      Union1.ssz_size(false).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 1)
-      Union1.ssz_size(0_u16).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 2)
-      Union1.ssz_size(0_i32).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 4)
+      it "should return size" do
+        Union1.ssz_size(false).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 1)
+        Union1.ssz_size(0_u16).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 2)
+        Union1.ssz_size(0_i32).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 4)
 
-      Union2.ssz_size(nil).should eq(SSZ::BYTES_PER_LENGTH_OFFSET)
-      Union2.ssz_size(0_u8).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 1)
-      Union2.ssz_size("ABC").should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 3)
+        Union2.ssz_size(nil).should eq(SSZ::BYTES_PER_LENGTH_OFFSET)
+        Union2.ssz_size(0_u8).should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 1)
+        Union2.ssz_size("ABC").should eq(SSZ::BYTES_PER_LENGTH_OFFSET + 3)
+      end
     end
 
     describe "#ssz_encode" do
@@ -513,6 +515,85 @@ describe SSZ do
         Union2.ssz_encode(nil).should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8])
         Union2.ssz_encode(32_u8).should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 32_u8])
         Union2.ssz_encode("ABC").should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 65_u8, 66_u8, 67_u8])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode Union1" do
+        bytes = Bytes[0, 0, 0, 0, 1]
+        io = IO::Memory.new(bytes)
+        res = Union1.ssz_decode(io)
+        res.should be_a(Bool)
+        res.should be_true
+        io.pos.should eq(5)
+        Union1.ssz_decode(bytes).should eq(true)
+
+        bytes = Bytes[1, 0, 0, 0, 0x12, 0x34, 0x56, 0]
+        io = IO::Memory.new(bytes)
+        res = Union1.ssz_decode(io)
+        res.should be_a(Int32)
+        res.should eq(0x563412)
+        io.pos.should eq(8)
+        Union1.ssz_decode(bytes).should eq(0x563412)
+
+        bytes = Bytes[2, 0, 0, 0, 0x12, 0x34]
+        io = IO::Memory.new(bytes)
+        res = Union1.ssz_decode(io)
+        res.should be_a(UInt16)
+        res.should eq(0x3412)
+        io.pos.should eq(6)
+        Union1.ssz_decode(bytes).should eq(0x3412)
+      end
+    end
+  end
+
+  describe Array do
+    describe "#ssz_variable?" do
+      it "should always return true" do
+        Array(Int32).ssz_variable?.should be_true
+        Array(Color).ssz_variable?.should be_true
+        Array(Union1).ssz_variable?.should be_true
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return false" do
+        Array(Int32).ssz_fixed?.should be_false
+        Array(Color).ssz_fixed?.should be_false
+        Array(Union1).ssz_fixed?.should be_false
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        [1_i32, 2_i32].ssz_size.should eq(8)
+        ([false, 0x6b_u16, 0x73ca_i32] of Union1).ssz_size.should eq(19)
+      end
+    end
+
+    describe "#ssz_encode" do
+      it "should encode array" do
+        [1_u8, 16_u8].ssz_encode.should eq(Bytes[1_u8, 16_u8])
+        [0x1122_u32, 0x3344_u32, 0x5566_u32].ssz_encode.should eq(Bytes[0x22, 0x11, 0, 0, 0x44, 0x33, 0, 0, 0x66, 0x55, 0, 0])
+        ([false, 0x6b_u16, 0x73ca_i32] of Union1).ssz_encode.should eq(Bytes[0, 0, 0, 0, 0, 2, 0, 0, 0, 0x6b, 0, 1, 0, 0, 0, 0xca, 0x73, 0, 0])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode Array(UInt8)" do
+        bytes = Bytes[1_u8, 16_u8]
+        io = IO::Memory.new(bytes)
+        Array(UInt8).ssz_decode(io, 2).should eq([1_u8, 16_u8] of UInt8)
+        io.pos.should eq(2)
+        Array(UInt8).ssz_decode(bytes).should eq([1_u8, 16_u8] of UInt8)
+      end
+
+      it "should decode Array(Union1)" do
+        bytes = Bytes[0, 0, 0, 0, 0, 2, 0, 0, 0, 0x6b, 0, 1, 0, 0, 0, 0xca, 0x73, 0, 0]
+        io = IO::Memory.new(bytes)
+        Array(Union1).ssz_decode(io, 19).should eq([false, 0x6b_u16, 0x73ca_i32] of Union1)
+        io.pos.should eq(19)
+        Array(Union1).ssz_decode(bytes).should eq([false, 0x6b_u16, 0x73ca_i32] of Union1)
       end
     end
   end

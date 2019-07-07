@@ -47,7 +47,7 @@ class Object
   end
 
   def self.ssz_decode(bytes : Bytes)
-    self.ssz_decode(IO::Memory.new(bytes))
+    self.ssz_decode(IO::Memory.new(bytes), bytes.size)
   end
 end
 
@@ -224,19 +224,35 @@ module Enumerable(T)
 end
 
 class Array(T)
-  def self.ssz_decode(io : IO, size : Int32 = 0)
+  def self.ssz_variable? : Bool
+    true
+  end
+
+  def ssz_variable? : Bool
+    true
+  end
+
+  def ssz_size : Int32
     {% if T.union? %}
-      offsets = [SSZ::Offset.ssz_decode(io).to_i32]
-      while offsets.size * SSZ::BYTES_PER_LENGTH_OFFSET < offsets.first
-        offsets.push(SSZ::Offset.ssz_decode(io).to_i32)
-      end
-      offsets.map_with_index do |offset, i|
-        io.pos = offset
-        next_offset = (i < offsets.size - 1) ? offsets[i + 1] : size - offsets.last
-        T.ssz_decode(io, next_offset - offset)
+      reduce(0) do |acc, element|
+        acc + T.ssz_size(element)
       end
     {% else %}
+      size * first.ssz_size
     {% end %}
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    end_pos = size > 0 ? io.pos + size : Int32::MAX
+    arr = Array(T).new
+    while io.pos < end_pos
+      begin
+        arr << T.ssz_decode(io).as(T)
+      rescue IO::EOFError
+        break
+      end
+    end
+    arr
   end
 end
 
