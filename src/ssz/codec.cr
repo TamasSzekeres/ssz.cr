@@ -234,6 +234,7 @@ class Array(T)
 
   def ssz_size : Int32
     {% if T.union? %}
+      size * SSZ::BYTES_PER_LENGTH_OFFSET +
       reduce(0) do |acc, element|
         acc + T.ssz_size(element)
       end
@@ -252,11 +253,25 @@ class Array(T)
   def self.ssz_decode(io : IO, size : Int32 = 0)
     end_pos = size > 0 ? io.pos + size : Int32::MAX
     arr = Array(T).new
-    while io.pos < end_pos
-      begin
-        arr << T.ssz_decode(io).as(T)
-      rescue IO::EOFError
-        break
+
+    if T.ssz_variable?
+      raise "Invalid `size` parameter!" if size <= SSZ::BYTES_PER_LENGTH_OFFSET
+      offsets = [SSZ::Offset.ssz_decode(io).to_i32]
+      while offsets.size * SSZ::BYTES_PER_LENGTH_OFFSET < offsets.first
+        offsets.push(SSZ::Offset.ssz_decode(io).to_i32)
+      end
+      offsets.each_with_index do |offset, i|
+        io.pos = offset
+        next_offset = (i < offsets.size - 1) ? offsets[i + 1] : size
+        arr.push(T.ssz_decode(io, next_offset - offset))
+      end
+    else
+      while io.pos < end_pos
+        begin
+          arr << T.ssz_decode(io).as(T)
+        rescue IO::EOFError
+          break
+        end
       end
     end
     arr
@@ -333,5 +348,6 @@ struct Union
       return {{utype}}.ssz_decode(io, size - SSZ::BYTES_PER_LENGTH_OFFSET)
     end
     {% end %}
+    raise "Invalid input!"
   end
 end
