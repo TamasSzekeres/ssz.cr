@@ -576,6 +576,7 @@ describe SSZ do
         [1_u8, 16_u8].ssz_encode.should eq(Bytes[1_u8, 16_u8])
         [0x1122_u32, 0x3344_u32, 0x5566_u32].ssz_encode.should eq(Bytes[0x22, 0x11, 0, 0, 0x44, 0x33, 0, 0, 0x66, 0x55, 0, 0])
         ([false, 0x6b_u16, 0x73ca_i32] of Union1).ssz_encode.should eq(Bytes[0, 0, 0, 0, 0, 2, 0, 0, 0, 0x6b, 0, 1, 0, 0, 0, 0xca, 0x73, 0, 0])
+        ["apple", "orange"].ssz_encode.should eq(Bytes[8, 0, 0, 0, 13, 0, 0, 0, 97, 112, 112, 108, 101, 111, 114, 97, 110, 103, 101])
       end
     end
 
@@ -594,6 +595,14 @@ describe SSZ do
         Array(Union1).ssz_decode(io, 19).should eq([false, 0x6b_u16, 0x73ca_i32] of Union1)
         io.pos.should eq(19)
         Array(Union1).ssz_decode(bytes).should eq([false, 0x6b_u16, 0x73ca_i32] of Union1)
+      end
+
+      it "should decode Array(String)" do
+        bytes = Bytes[8, 0, 0, 0, 13, 0, 0, 0, 97, 112, 112, 108, 101, 111, 114, 97, 110, 103, 101]
+        io = IO::Memory.new(bytes)
+        Array(String).ssz_decode(io, 19).should eq(["apple", "orange"])
+        io.pos.should eq(19)
+        Array(String).ssz_decode(bytes).should eq(["apple", "orange"])
       end
     end
   end

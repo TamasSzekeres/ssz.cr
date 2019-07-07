@@ -28,11 +28,11 @@ class Object
 
   @[NoInline]
   def ssz_encode : Bytes
-    size = ssz_size
-    io = IO::Memory.new(size)
+    _ssz_size = ssz_size
+    io = IO::Memory.new(_ssz_size)
     ssz_encode(io)
-    buffer = Bytes.new(size)
-    io.seek(-size, IO::Seek::Current)
+    buffer = Bytes.new(_ssz_size)
+    io.seek(-_ssz_size, IO::Seek::Current)
     io.read_fully(buffer)
     buffer
   end
@@ -238,7 +238,14 @@ class Array(T)
         acc + T.ssz_size(element)
       end
     {% else %}
-      size * first.ssz_size
+      if T.ssz_variable?
+        size * SSZ::BYTES_PER_LENGTH_OFFSET +
+        reduce(0) do |acc, element|
+          acc + element.ssz_size
+        end
+      else
+        size * first.ssz_size
+      end
     {% end %}
   end
 
