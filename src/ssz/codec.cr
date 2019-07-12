@@ -278,6 +278,36 @@ class Array(T)
   end
 end
 
+struct StaticArray(T, N)
+  def self.ssz_variable? : Bool
+    T.ssz_variable?
+  end
+
+  def ssz_variable? : Bool
+    T.ssz_variable?
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    if T.ssz_variable?
+      offsets = Array(SSZ::Offset).new(N) do
+        SSZ::Offset.ssz_decode(io, SSZ::BYTES_PER_LENGTH_OFFSET)
+      end
+      StaticArray(T, N).new do |i|
+        if io.pos != offsets[i]
+          raise IO::Error.new("Invalid io position: #{io.pos}. Must be #{offsets[i]} !")
+        end
+        element_size = i < (N - 1) ? offsets[i + 1] - offsets[i] : size - offsets[i]
+        element_size = 0 if element_size < 0
+        T.ssz_decode(io, element_size)
+      end
+    else
+      StaticArray(T, N).new do
+        T.ssz_decode(io)
+      end
+    end
+  end
+end
+
 struct Slice(T)
   def self.ssz_variable? : Bool
     true
@@ -326,7 +356,11 @@ class String
   end
 
   def self.ssz_decode(io : IO, size : Int32 = 0)
-    io.read_string(size)
+    if size > 0
+      io.read_string(size)
+    else
+      io.gets_to_end
+    end
   end
 end
 
