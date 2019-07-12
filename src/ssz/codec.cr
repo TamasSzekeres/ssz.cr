@@ -278,6 +278,17 @@ class Array(T)
   end
 end
 
+struct Slice(T)
+  def self.ssz_variable? : Bool
+    true
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    arr = Array(T).ssz_decode(io, size)
+    Slice(T).new(arr.size) { |i| arr[i] }
+  end
+end
+
 class String
   def self.ssz_variable? : Bool
     true
