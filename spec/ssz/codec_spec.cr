@@ -508,10 +508,43 @@ describe SSZ do
   end
 
   describe Set do
+    describe "#ssz_variable?" do
+      it "should always return true" do
+        Set(Int32).ssz_variable?.should be_true
+        Set{1, 2}.ssz_variable?.should be_true
+        Set{101_u8, 22_u8}.ssz_variable?.should be_true
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true" do
+        Set(Int32).ssz_fixed?.should be_false
+        Set{1, 2}.ssz_fixed?.should be_false
+        Set{101_u8, 22_u8}.ssz_fixed?.should be_false
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        Set{1, 2}.ssz_size.should eq(8)
+        Set{101_u8, 22_u8}.ssz_size.should eq(2)
+      end
+    end
+
     describe "#ssz_encode" do
       it "should encode set" do
         Set{1, 2}.ssz_encode.should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 2_u8, 0_u8, 0_u8, 0_u8])
         Set{101_u8, 22_u8}.ssz_encode.should eq(Bytes[101_u8, 22_u8])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode set" do
+        bytes = Bytes[1_u8, 0_u8, 0_u8, 0_u8, 2_u8, 0_u8, 0_u8, 0_u8]
+        io = IO::Memory.new(bytes)
+        Set(Int32).ssz_decode(io).should eq(Set{1, 2})
+        io.pos.should eq(8)
+        Set(Int32).ssz_decode(bytes).should eq(Set{1, 2})
       end
     end
   end
