@@ -8,13 +8,44 @@ module SSZ
   end
 
   module Serializable
-    def ssz_variable? : Bool
+    macro included
+      def self.ssz_variable? : Bool
+        {% for ivar in @type.instance_vars %}
+          {% unless ivar.annotation(::SSZ::Ignored) %}
+            return true if {{ivar.type}}.ssz_variable?
+          {% end %}
+        {% end %}
+        false
+      end
+
+      def self.new(io : IO, size : Int32 = 0)
+        instance = allocate
+        instance.initialize(__io_for_ssz_decoding: io, __size_for_ssz_decoding: size)
+        GC.add_finalizer(instance) if instance.responds_to?(:finalize)
+        instance
+      end
+
+      def self.ssz_decode(io : IO, size : Int32 = 0)
+        new(io, size)
+      end
+
+      macro inherited
+        def self.new(io : IO, size : Int32 = 0)
+          super
+        end
+      end
+    end
+
+    def initialize(*, __io_for_ssz_decoding io : IO, __size_for_ssz_decoding size : Int32 = 0)
       {% for ivar in @type.instance_vars %}
         {% unless ivar.annotation(::SSZ::Ignored) %}
-          return true if @{{ivar}}.ssz_variable?
+          @{{ivar}} = {{ivar.type}}.ssz_decode(io)
         {% end %}
       {% end %}
-      false
+    end
+
+    def ssz_variable? : Bool
+      {{@type.name}}.ssz_variable?
     end
 
     def ssz_size : Int32
@@ -22,7 +53,7 @@ module SSZ
       {% for ivar in @type.instance_vars %}
         {% unless ivar.annotation(::SSZ::Ignored) %}
           sum += @{{ivar}}.ssz_size
-          sum += BYTES_PER_LENGTH_OFFSET if @{{ivar}}.ssz_variable?
+          sum += BYTES_PER_LENGTH_OFFSET if {{ivar.type}}.ssz_variable?
         {% end %}
       {% end %}
       sum
