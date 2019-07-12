@@ -289,6 +289,17 @@ struct Slice(T)
   end
 end
 
+struct Set(T)
+  def self.ssz_variable? : Bool
+    true
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    arr = Array(T).ssz_decode(io, size)
+    Set(T).new(arr)
+  end
+end
+
 class String
   def self.ssz_variable? : Bool
     true
