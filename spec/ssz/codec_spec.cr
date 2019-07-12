@@ -678,4 +678,87 @@ describe SSZ do
       end
     end
   end
+
+  describe StaticArray do
+    describe "#ssz_variable?" do
+      it "should always return true/false depending on T" do
+        StaticArray(Int32, 4).ssz_variable?.should be_false
+        StaticArray(Color, 3).ssz_variable?.should be_false
+        StaticArray(String, 5).ssz_variable?.should be_true
+        StaticArray(Union1, 5).ssz_variable?.should be_true
+
+        StaticArray[1_i32, 2_i32, 3_i32].ssz_variable?.should be_false
+        StaticArray[Color::Red, Color::Blue].ssz_variable?.should be_false
+        StaticArray["apple", "banana"].ssz_variable?.should be_true
+        StaticArray[true, 1_u16, 2_i32].ssz_variable?.should be_true
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return true/false depending on T" do
+        StaticArray(Int32, 4).ssz_fixed?.should be_true
+        StaticArray(Color, 3).ssz_fixed?.should be_true
+        StaticArray(String, 5).ssz_fixed?.should be_false
+        StaticArray(Union1, 5).ssz_fixed?.should be_false
+
+        StaticArray[1_i32, 2_i32, 3_i32].ssz_fixed?.should be_true
+        StaticArray[Color::Red, Color::Blue].ssz_fixed?.should be_true
+        StaticArray["apple", "banana"].ssz_fixed?.should be_false
+        StaticArray[true, 1_u16, 2_i32].ssz_fixed?.should be_false
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        StaticArray[1_i32, 2_i32, 3_i32].ssz_size.should eq(12)
+        StaticArray[Color::Red, Color::Blue].ssz_size.should eq(8)
+        StaticArray["apple", "banana"].ssz_size.should eq(19)
+        StaticArray[true, 1_u16, 2_i32].ssz_size.should eq(31)
+      end
+    end
+
+    describe "#ssz_encode" do
+      it "should encode StaticArray" do
+        StaticArray[1_i32, 2_i32, 3_i32].ssz_encode.should eq(Bytes[1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0])
+        StaticArray[Color::Red, Color::Blue].ssz_encode.should eq(Bytes[0, 0, 0, 0, 2, 0, 0, 0])
+        StaticArray["apple", "banana"].ssz_encode.should eq(Bytes[8, 0, 0, 0, 13, 0, 0, 0, 97, 112, 112, 108, 101, 98, 97, 110, 97, 110, 97])
+        StaticArray[true, 1_u16, 2_i32].ssz_encode.should eq(Bytes[12, 0, 0, 0, 17, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should encode StaticArray(Int32n 3)" do
+        bytes = Bytes[1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0]
+        io = IO::Memory.new(bytes)
+        StaticArray(Int32, 3).ssz_decode(io).should eq(StaticArray[1_i32, 2_i32, 3_i32])
+        io.pos.should eq(12)
+        StaticArray(Int32, 3).ssz_decode(bytes).should eq(StaticArray[1_i32, 2_i32, 3_i32])
+      end
+
+      it "should encode StaticArray(Color, 2)" do
+        bytes = Bytes[0, 0, 0, 0, 2, 0, 0, 0]
+        io = IO::Memory.new(bytes)
+        StaticArray(Color, 2).ssz_decode(io).should eq(StaticArray[Color::Red, Color::Blue])
+        io.pos.should eq(8)
+        StaticArray(Color, 2).ssz_decode(bytes).should eq(StaticArray[Color::Red, Color::Blue])
+      end
+
+      it "should encode StaticArray(String, 2)" do
+        bytes = Bytes[8, 0, 0, 0, 13, 0, 0, 0, 97, 112, 112, 108, 101, 98, 97, 110, 97, 110, 97]
+        io = IO::Memory.new(bytes)
+        StaticArray(String, 2).ssz_decode(io).should eq(StaticArray["apple", "banana"])
+        io.pos.should eq(19)
+        StaticArray(String, 2).ssz_decode(bytes).should eq(StaticArray["apple", "banana"])
+        # StaticArray[true, 1_u16, 2_i32].ssz_encode.should eq(Bytes[12, 0, 0, 0, 17, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0])
+      end
+
+      it "should encode StaticArray(Union1, 3)" do
+        bytes = Bytes[12, 0, 0, 0, 17, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0]
+        io = IO::Memory.new(bytes)
+        StaticArray(Union1, 3).ssz_decode(io).should eq(StaticArray[true, 1_u16, 2_i32])
+        io.pos.should eq(31)
+        StaticArray(Union1, 3).ssz_decode(bytes).should eq(StaticArray[true, 1_u16, 2_i32])
+      end
+    end
+  end
 end
