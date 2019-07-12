@@ -451,10 +451,49 @@ describe SSZ do
   end
 
   describe Bytes do
+    describe "#ssz_variable?" do
+      it "should always return true" do
+        Bytes.ssz_variable?.should be_true
+        Bytes.empty.ssz_variable?.should be_true
+        Bytes[0_u8, 120_u8, 250_u8].ssz_variable?.should be_true
+      end
+    end
+
+    describe "#ssz_fixed?" do
+      it "should always return false" do
+        Bytes.ssz_fixed?.should be_false
+        Bytes.empty.ssz_fixed?.should be_false
+        Bytes[0_u8, 120_u8, 250_u8].ssz_fixed?.should be_false
+      end
+    end
+
+    describe "#ssz_size" do
+      it "should return size" do
+        Bytes.empty.ssz_size.should eq(0)
+        Bytes[0_u8, 120_u8, 250_u8].ssz_size.should eq(3)
+      end
+    end
+
     describe "#ssz_encode" do
       it "should encode bytes" do
         Bytes.empty.ssz_encode.should eq(Bytes.empty)
         Bytes[0_u8, 120_u8, 250_u8].ssz_encode.should eq(Bytes[0_u8, 120_u8, 250_u8])
+      end
+    end
+
+    describe "#ssz_decode" do
+      it "should decode bytes" do
+        bytes = Bytes.empty
+        io = IO::Memory.new(bytes)
+        Bytes.ssz_decode(io).should eq(Bytes.empty)
+        io.pos.should eq(0)
+        Bytes.ssz_decode(bytes).should eq(Bytes.empty)
+
+        bytes = Bytes[0_u8, 120_u8, 250_u8]
+        io = IO::Memory.new(bytes)
+        Bytes.ssz_decode(io).should eq(Bytes[0_u8, 120_u8, 250_u8])
+        io.pos.should eq(3)
+        Bytes.ssz_decode(bytes).should eq(Bytes[0_u8, 120_u8, 250_u8])
       end
     end
   end
