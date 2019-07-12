@@ -15,3 +15,13 @@ end
 
 alias Union1 = Bool | UInt16 | Int32
 alias Union2 = (UInt8 | String)?
+
+struct Point
+  include SSZ::Serializable
+
+  property x : Int32
+  property y : Int32
+
+  def initialize(@x : Int32 = 0, @y : Int32 = 0)
+  end
+end
