@@ -46,8 +46,19 @@ class Person
 end
 
 # Inherited
-# class Employee < Person
-#   include SSZ::Serializable
+class Employee < Person
+  include SSZ::Serializable
 
-#   property company : String
-# end
+  property company : String = ""
+
+  @[SSZ::Ignored]
+  property calculated : Int32 = 0
+
+  def initialize(@name : String, @age : UInt16, @company : String)
+    @calculated = @name.size + @age + @company.size
+  end
+
+  def ==(other : Employee) : Bool
+    (@name == other.name) && (@age == other.age) && (@company == other.company)
+  end
+end
