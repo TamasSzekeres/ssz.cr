@@ -46,13 +46,14 @@ module SSZ
           {% end %}
         {% end %}
         if offsets.size > 0
-        offset_i = 0
+          offset_i = 0
           {% for ivar in @type.instance_vars %}
             {% unless ivar.annotation(::SSZ::Ignored) %}
               if {{ivar.type}}.ssz_variable?
                 element_size = offset_i < (offsets.size - 1) ? offsets[offset_i + 1] - offsets[offset_i] : 0
                 @{{ivar}} = {{ivar.type}}.ssz_decode(io, element_size)
               end
+              offset_i += 1
             {% end %}
           {% end %}
         end
