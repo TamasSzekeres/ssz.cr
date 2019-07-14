@@ -29,5 +29,33 @@ describe SSZ do
         Point.ssz_decode(bytes).should eq(p)
       end
     end
+
+    describe Person do
+      person = Person.new("John", 45)
+
+      it "should return true" do
+        Person.ssz_variable?.should be_true
+        person.ssz_variable?.should be_true
+      end
+
+      it "should return false" do
+        Person.ssz_fixed?.should be_false
+        person.ssz_fixed?.should be_false
+      end
+
+      it "should return size" do
+        person.ssz_size.should eq(10)
+      end
+
+      it "should serialize Person" do
+        bytes = person.ssz_encode
+        bytes.should eq(Bytes[6, 0, 0, 0, 45, 0, 74, 111, 104, 110])
+
+        io = IO::Memory.new(bytes)
+        Person.ssz_decode(io).should eq(person)
+        io.pos.should eq(10)
+        Person.ssz_decode(bytes).should eq(person)
+      end
+    end
   end
 end
