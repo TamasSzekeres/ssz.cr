@@ -10,12 +10,9 @@ module SSZ
   module Serializable
     macro included
       def self.ssz_variable? : Bool
-        {% for ivar in @type.instance_vars %}
-          {% unless ivar.annotation(::SSZ::Ignored) %}
-            return true if {{ivar.type}}.ssz_variable?
-          {% end %}
-        {% end %}
-        false
+        instance = allocate
+        GC.add_finalizer(instance) if instance.responds_to?(:finalize)
+        instance.ssz_variable?
       end
 
       def self.new(io : IO, size : Int32 = 0)
@@ -37,15 +34,44 @@ module SSZ
     end
 
     def initialize(*, __io_for_ssz_decoding io : IO, __size_for_ssz_decoding size : Int32 = 0)
-      {% for ivar in @type.instance_vars %}
-        {% unless ivar.annotation(::SSZ::Ignored) %}
-          @{{ivar}} = {{ivar.type}}.ssz_decode(io)
+      if ssz_variable?
+        offsets = [] of SSZ::Offset
+        {% for ivar in @type.instance_vars %}
+          {% unless ivar.annotation(::SSZ::Ignored) %}
+            if {{ivar.type}}.ssz_variable?
+              offsets.push(SSZ::Offset.ssz_decode(io))
+            else
+              @{{ivar}} = {{ivar.type}}.ssz_decode(io)
+            end
+          {% end %}
         {% end %}
-      {% end %}
+        if offsets.size > 0
+        offset_i = 0
+          {% for ivar in @type.instance_vars %}
+            {% unless ivar.annotation(::SSZ::Ignored) %}
+              if {{ivar.type}}.ssz_variable?
+                element_size = offset_i < (offsets.size - 1) ? offsets[offset_i + 1] - offsets[offset_i] : 0
+                @{{ivar}} = {{ivar.type}}.ssz_decode(io, element_size)
+              end
+            {% end %}
+          {% end %}
+        end
+      else
+        {% for ivar in @type.instance_vars %}
+          {% unless ivar.annotation(::SSZ::Ignored) %}
+            @{{ivar}} = {{ivar.type}}.ssz_decode(io)
+          {% end %}
+        {% end %}
+      end
     end
 
     def ssz_variable? : Bool
-      {{@type.name}}.ssz_variable?
+      {% for ivar in @type.instance_vars %}
+        {% unless ivar.annotation(::SSZ::Ignored) %}
+          return true if {{ivar.type}}.ssz_variable?
+        {% end %}
+      {% end %}
+      false
     end
 
     def ssz_size : Int32
