@@ -57,5 +57,37 @@ describe SSZ do
         Person.ssz_decode(bytes).should eq(person)
       end
     end
+
+    # Tesing inheritance & `SSZ::Ignore` attribute
+    describe Employee do
+      employee = Employee.new("James", 32, "DEV Inc.")
+
+      it "should return true" do
+        Employee.ssz_variable?.should be_true
+        employee.ssz_variable?.should be_true
+      end
+
+      it "should return false" do
+        Employee.ssz_fixed?.should be_false
+        employee.ssz_fixed?.should be_false
+      end
+
+      it "should return size" do
+        employee.ssz_size.should eq(23)
+      end
+
+      it "should serialize Employee" do
+        employee.calculated.should eq(45)
+        bytes = employee.ssz_encode
+        bytes.should eq(Bytes[10, 0, 0, 0, 32, 0, 15, 0, 0, 0, 74, 97, 109, 101, 115, 68, 69, 86, 32, 73, 110, 99, 46])
+
+        io = IO::Memory.new(bytes)
+        decoded = Employee.ssz_decode(io)
+        decoded.should eq(employee)
+        decoded.calculated.should eq(0)
+        io.pos.should eq(23)
+        Employee.ssz_decode(bytes).should eq(employee)
+      end
+    end
   end
 end
