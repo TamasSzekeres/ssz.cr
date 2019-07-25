@@ -1,14 +1,15 @@
 require "./codec"
 
 module SSZ
-  annotation Field
-  end
-
   annotation Ignored
   end
 
   module Serializable
     macro included
+      def self.ssz_basic? : Bool
+        false
+      end
+
       def self.ssz_variable? : Bool
         instance = allocate
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
@@ -64,6 +65,10 @@ module SSZ
           {% end %}
         {% end %}
       end
+    end
+
+    def ssz_basic? : Bool
+      false
     end
 
     def ssz_variable? : Bool
