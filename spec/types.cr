@@ -15,6 +15,7 @@ end
 
 alias Union1 = Bool | UInt16 | Int32
 alias Union2 = (UInt8 | String)?
+alias Union3 = (Bool | Int32 | Nil | UInt32)
 
 # Simple struct
 struct Point

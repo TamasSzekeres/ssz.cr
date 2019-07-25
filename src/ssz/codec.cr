@@ -439,6 +439,32 @@ struct Union
     SSZ::BYTES_PER_LENGTH_OFFSET + value.ssz_size
   end
 
+  def self.ssz_type_index(value : self) : SSZ::Offset
+    {% if @type.nilable? %}
+      if value.nil?
+        return 0.as(SSZ::Offset)
+      end
+
+      type_index = 1.as(SSZ::Offset)
+      {% for utype in @type.union_types %}
+        if value.is_a?({{utype}})
+          return type_index
+        else
+          type_index += 1
+        end
+      {% end %}
+    {% else %}
+      {% for utype, i in @type.union_types %}
+        if value.is_a?({{utype}})
+          return {{i}}.as(SSZ::Offset)
+        end
+      {% end %}
+    {% end %}
+
+    # Not-reachable
+    0.as(SSZ::Offset)
+  end
+
   def self.ssz_encode(value : self) : Bytes
     size = self.ssz_size(value)
     io = IO::Memory.new(size)

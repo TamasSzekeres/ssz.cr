@@ -576,6 +576,19 @@ describe SSZ do
       end
     end
 
+    describe "#ssz_type_index" do
+      it "should return proper type-index" do
+        Union1.ssz_type_index(false).should eq(0)
+        Union1.ssz_type_index(0_i32).should eq(1)
+        Union1.ssz_type_index(0_u16).should eq(2)
+
+        Union3.ssz_type_index(nil).should eq(0)
+        Union3.ssz_type_index(false).should eq(1)
+        Union3.ssz_type_index(0_i32).should eq(2)
+        Union3.ssz_type_index(0_u32).should eq(3)
+      end
+    end
+
     describe "#ssz_encode" do
       it "should encode Union1" do
         Union1.ssz_encode(true).should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 1_u8])
