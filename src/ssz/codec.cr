@@ -462,7 +462,7 @@ struct Union
     {% end %}
 
     # Not-reachable
-    0.as(SSZ::Offset)
+    raise "Invalid input!"
   end
 
   def self.ssz_encode(value : self) : Bytes
@@ -476,22 +476,33 @@ struct Union
   end
 
   def self.ssz_encode(io : IO, value : self)
-    {% for utype, i in @type.union_types %}
-    if value.is_a?({{utype}})
-      {{i}}.as(SSZ::Offset).ssz_encode(io)
-      value.ssz_encode(io)
-      return
-    end
-    {% end %}
+    ssz_type_index(value).ssz_encode(io)
+    value.ssz_encode(io)
   end
 
   def self.ssz_decode(io : IO, size : Int32 = 0)
     type_index = SSZ::Offset.ssz_decode(io)
-    {% for utype, i in @type.union_types %}
-    if type_index == {{i}}
-      return {{utype}}.ssz_decode(io, size - SSZ::BYTES_PER_LENGTH_OFFSET)
-    end
+    {% if @type.nilable? %}
+      if type_index == 0
+        return nil
+      end
+
+      ti = 1.as(SSZ::Offset)
+      {% for utype in @type.union_types %}
+      if type_index == ti
+        return {{utype}}.ssz_decode(io, size - SSZ::BYTES_PER_LENGTH_OFFSET)
+      else
+        ti += 1
+      end
+      {% end %}
+    {% else %}
+      {% for utype, i in @type.union_types %}
+      if type_index == {{i}}
+        return {{utype}}.ssz_decode(io, size - SSZ::BYTES_PER_LENGTH_OFFSET)
+      end
+      {% end %}
     {% end %}
+
     raise "Invalid input!"
   end
 end

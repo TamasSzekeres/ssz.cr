@@ -597,9 +597,16 @@ describe SSZ do
       end
 
       it "should encode Union2" do
-        Union2.ssz_encode(nil).should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8])
-        Union2.ssz_encode(32_u8).should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 32_u8])
-        Union2.ssz_encode("ABC").should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8, 65_u8, 66_u8, 67_u8])
+        Union2.ssz_encode(nil).should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
+        Union2.ssz_encode(32_u8).should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8, 32_u8])
+        Union2.ssz_encode("ABC").should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 65_u8, 66_u8, 67_u8])
+      end
+
+      it "should encode Union3" do
+        Union3.ssz_encode(nil).should eq(Bytes[0_u8, 0_u8, 0_u8, 0_u8])
+        Union3.ssz_encode(true).should eq(Bytes[1_u8, 0_u8, 0_u8, 0_u8, 1_u8])
+        Union3.ssz_encode(32_i32).should eq(Bytes[2_u8, 0_u8, 0_u8, 0_u8, 32_u8, 0_u8, 0_u8, 0_u8])
+        Union3.ssz_encode(33_u32).should eq(Bytes[3_u8, 0_u8, 0_u8, 0_u8, 33_u8, 0_u8, 0_u8, 0_u8])
       end
     end
 
@@ -628,6 +635,32 @@ describe SSZ do
         res.should eq(0x3412)
         io.pos.should eq(6)
         Union1.ssz_decode(bytes).should eq(0x3412)
+      end
+
+      it "should decode Union3" do
+        bytes = Bytes[0, 0, 0, 0]
+        io = IO::Memory.new(bytes)
+        res = Union3.ssz_decode(io)
+        res.should be_a(Nil)
+        res.nil?.should be_true
+        io.pos.should eq(4)
+        Union3.ssz_decode(bytes).nil?.should be_true
+
+        bytes = Bytes[1, 0, 0, 0, 1]
+        io = IO::Memory.new(bytes)
+        res = Union3.ssz_decode(io)
+        res.should be_a(Bool)
+        res.should be_true
+        io.pos.should eq(5)
+        Union3.ssz_decode(bytes).should be_true
+
+        bytes = Bytes[3, 0, 0, 0, 33, 0, 0, 0]
+        io = IO::Memory.new(bytes)
+        res = Union3.ssz_decode(io)
+        res.should be_a(UInt32)
+        res.should eq(33_u32)
+        io.pos.should eq(8)
+        Union3.ssz_decode(bytes).should eq(33_u32)
       end
     end
   end
