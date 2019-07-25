@@ -1,5 +1,7 @@
 # Simple Serialize (SSZ)
 
+[![Build Status](https://travis-ci.org/light-side-software/ssz.cr.svg?branch=master)](https://travis-ci.org/light-side-software/ssz.cr.svg?branch=master)
+
 This package implements simple serialize algorithm specified in official Ethereum 2.0 [spec](https://github.com/ethereum/eth2.0-specs/blob/master/specs/simple-serialize.md).
 
 ## Installation
