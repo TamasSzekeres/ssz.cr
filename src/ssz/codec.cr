@@ -389,6 +389,14 @@ struct Set(T)
 end
 
 class String
+  def self.ssz_basic? : Bool
+    false
+  end
+
+  def ssz_basic? : Bool
+    false
+  end
+
   def self.ssz_variable? : Bool
     true
   end
