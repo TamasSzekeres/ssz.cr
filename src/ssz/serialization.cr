@@ -84,7 +84,11 @@ module SSZ
       sum = 0
       {% for ivar in @type.instance_vars %}
         {% unless ivar.annotation(::SSZ::Ignored) %}
-          sum += @{{ivar}}.ssz_size
+          {% if ivar.type.union? %}
+            sum += {{ivar.type}}.ssz_size(@{{ivar}})
+          {% else %}
+            sum += @{{ivar}}.ssz_size
+          {% end %}
           sum += BYTES_PER_LENGTH_OFFSET if {{ivar.type}}.ssz_variable?
         {% end %}
       {% end %}
@@ -94,20 +98,38 @@ module SSZ
     def ssz_encode(io : IO)
       {% unless @type.instance_vars.empty? %}
         ivars = {{@type.instance_vars}}
-        ignored = Array(Bool).new(ivars.size)
+        ivar_types = ivars.map(&.class)
+        ignored = Array(Bool).new(initial_capacity: ivars.size)
+        is_union = Array(Bool).new(initial_capacity: ivars.size)
         {% for ivar in @type.instance_vars %}
           {% if ivar.annotation(::SSZ::Ignored) %}
             ignored.push(true)
           {% else %}
             ignored.push(false)
           {% end %}
+
+          {% if ivar.type.union? %}
+            is_union.push(true)
+          {% else %}
+            is_union.push(false)
+          {% end %}
         {% end %}
 
-        fixed_parts = ivars.map_with_index {|element, i| !ignored[i] && element.ssz_fixed? ? element : nil}
-        variable_parts = ivars.map_with_index {|element, i| !ignored[i] && element.ssz_variable? ? element : nil}
+        fixed_parts = ivars.map_with_index do |element, i|
+          !ignored[i] && !is_union[i] && element.ssz_fixed? ? element : nil
+        end
+        variable_parts = ivars.map_with_index do |element, i|
+          is_union[i] || (!ignored[i] && element.ssz_variable?) ? element : nil
+        end
 
         fixed_lengths = fixed_parts.map_with_index { |part, i| part.nil? ? (ignored[i] ? 0 : SSZ::BYTES_PER_LENGTH_OFFSET) : part.ssz_size }
-        variable_lengths = variable_parts.map { |part| part.nil? ? 0 : part.ssz_size }
+        variable_lengths = variable_parts.map_with_index do |part, i|
+          size = part.nil? ? 0 : part.ssz_size
+          if is_union[i]
+            size += SSZ::BYTES_PER_LENGTH_OFFSET
+          end
+          size
+        end
 
         sum_fixed_lengths = fixed_lengths.sum
         variable_offsets = variable_lengths.map_with_index do |l, i|
@@ -118,9 +140,15 @@ module SSZ
         fixed_parts.each_with_index do |part, i|
           part.ssz_encode(io) unless ignored[i]
         end
-        variable_parts.each_with_index do |part, i|
-          part.ssz_encode(io) unless ignored[i]
-        end
+        {% for ivar, i in @type.instance_vars %}
+          unless ignored[{{i}}]
+            {% if ivar.type.union? %}
+              {{ivar.type}}.ssz_encode(io, variable_parts[{{i}}].as({{ivar.type}}))
+            {% else %}
+              variable_parts[{{i}}].ssz_encode(io)
+            {% end %}
+          end
+        {% end %}
       {% end %}
     end
   end

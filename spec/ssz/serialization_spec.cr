@@ -89,5 +89,34 @@ describe SSZ do
         Employee.ssz_decode(bytes).should eq(employee)
       end
     end
+
+    describe StructWithUnions do
+      s = StructWithUnions.new(12_u8, nil, 'B', 45_i32)
+
+      it "should return true" do
+        StructWithUnions.ssz_variable?.should be_true
+        s.ssz_variable?.should be_true
+      end
+
+      it "should return false" do
+        StructWithUnions.ssz_fixed?.should be_false
+        s.ssz_fixed?.should be_false
+      end
+
+      it "should return size" do
+        s.ssz_size.should eq(25)
+      end
+
+      it "should serialize StructWithUnions" do
+        bytes = s.ssz_encode
+        bytes.should eq(Bytes[12, 13, 0, 0, 0, 66, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 45, 0, 0, 0])
+
+        io = IO::Memory.new(bytes)
+        decoded = StructWithUnions.ssz_decode(io)
+        decoded.should eq(s)
+        io.pos.should eq(25)
+        StructWithUnions.ssz_decode(bytes).should eq(s)
+      end
+    end
   end
 end

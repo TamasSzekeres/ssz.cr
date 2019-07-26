@@ -63,3 +63,19 @@ class Employee < Person
     (@name == other.name) && (@age == other.age) && (@company == other.company)
   end
 end
+
+struct StructWithUnions
+  include SSZ::Serializable
+
+  property a : UInt8 = 0_u8
+  property b : Union3 = nil
+  property c : Char = 'A'
+  property d : Union3 = false
+
+  def initialize(@a : UInt8, @b : Union3, @c : Char, @d : Union3)
+  end
+
+  def ==(other : self) : Bool
+    (@a == other.a) && (@b == other.b) && (@c == other.c) && (@d == other.d)
+  end
+end
