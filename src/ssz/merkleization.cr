@@ -1,11 +1,13 @@
+require "./codec"
 require "./constants"
+require "./utils"
 
 module SSZ
   # Given ordered `SSZ::BYTES_PER_CHUNK`-byte chunks, if necessary utilize zero chunks so that the
   # number of chunks is a power of two, *Merkleize* the chunks, and return the root.
   # Note that merkleize on a single chunk is simply that chunk, i.e. the identity
   # when the number of chunks is one.
-  def self.bitwise_merkleize(chunks : Array(Bytes), padding : UInt64) : Bytes
+  def self.bitwise_merkleize(chunks : Enumerable(Bytes), padding : UInt64) : Bytes
     count = chunks.size.to_u64
     depth = bit_length(0).to_u64
     if bit_length(count - 1) > depth
@@ -90,14 +92,20 @@ module SSZ
     Math.log2(n.to_f64).to_u64 + 1_u64
   end
 
-  # Retuns Merkle root of given **root** and a **length** (`UInt256` little-endian serialization)
+  # Returns Merkle root of given **root** and a **length** (`UInt256` little-endian serialization)
   def self.mix_in_length(root : Bytes, length : Bytes) : Bytes
     raise "`root` must be 32-byte length" if root.size != 32
     hash(root + length)
   end
 
+  # Returns Merkle root of given **root** and a **type_index** (`UInt256` little-endian serialization)
   def self.mix_in_type(root : Bytes, type_index : Bytes) : Bytes
     raise "`root` must be 32-byte length" if root.size != 32
     mix_in_length(root, type_index)
+  end
+
+  # Returns Merkle root of given **root** and a **type_index** (`UInt256` little-endian serialization)
+  def self.mix_in_type(root : Bytes, type_index : SSZ::Offset)
+    mix_in_type(root, type_index.ssz_encode.resize(SSZ::BYTES_PER_CHUNK, 0_u8))
   end
 end
