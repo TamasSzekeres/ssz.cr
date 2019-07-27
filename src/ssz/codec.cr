@@ -1,3 +1,4 @@
+require "complex"
 require "uuid"
 
 require "./constants"
@@ -127,6 +128,40 @@ struct Number
 
   def self.ssz_decode(io : IO, size : Int32 = 0)
     from_io(io, IO::ByteFormat::LittleEndian)
+  end
+end
+
+struct Complex
+  def self.ssz_basic? : Bool
+    false
+  end
+
+  def ssz_basic? : Bool
+    false
+  end
+
+  def self.ssz_variable? : Bool
+    false
+  end
+
+  def ssz_variable? : Bool
+    false
+  end
+
+  def ssz_size : Int32
+    sizeof(Float64) * 2
+  end
+
+  def ssz_encode(io : IO)
+    real.ssz_encode(io)
+    imag.ssz_encode(io)
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    new(
+      real: Float64.ssz_decode(io, sizeof(Float64)),
+      imag: Float64.ssz_decode(io, sizeof(Float64))
+    )
   end
 end
 
