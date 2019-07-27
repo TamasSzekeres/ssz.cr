@@ -373,6 +373,17 @@ class Array(T)
   end
 end
 
+class Deque(T)
+  def self.ssz_variable? : Bool
+    true
+  end
+
+  def self.ssz_decode(io : IO, size : Int32 = 0)
+    arr = Array(T).ssz_decode(io, size)
+    Deque(T).new(arr)
+  end
+end
+
 struct StaticArray(T, N)
   def self.ssz_variable? : Bool
     T.ssz_variable?
