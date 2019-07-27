@@ -436,6 +436,134 @@ struct Set(T)
   end
 end
 
+struct Range(B, E)
+  def self.ssz_basic? : Bool
+    false
+  end
+
+  def ssz_basic? : Bool
+    false
+  end
+
+  def self.ssz_variable? : Bool
+    B.ssz_variable? || E.ssz_variable?
+  end
+
+  def ssz_variable? : Bool
+    B.ssz_variable? || E.ssz_variable?
+  end
+
+  def self.ssz_fixed? : Bool
+    B.ssz_fixed? && E.ssz_fixed?
+  end
+
+  def ssz_fixed? : Bool
+    B.ssz_fixed? && E.ssz_fixed?
+  end
+
+  def ssz_size : Int32
+    size = @begin.ssz_size + @end.ssz_size + 1
+    {% if B.union? %}
+      size += SSZ::BYTES_PER_LENGTH_OFFSET * 2
+    {% else %}
+      if @begin.ssz_variable?
+        size += SSZ::BYTES_PER_LENGTH_OFFSET
+      end
+    {% end %}
+    {% if E.union? %}
+      size += SSZ::BYTES_PER_LENGTH_OFFSET * 2
+    {% else %}
+      if @end.ssz_variable?
+        size += SSZ::BYTES_PER_LENGTH_OFFSET
+      end
+    {% end %}
+    size
+  end
+
+  def ssz_encode(io : IO)
+    b_off = 0 # offset of @begin
+    e_off = 0 # offset of @end
+
+    {% if B.union? %}
+      b_off = SSZ::BYTES_PER_LENGTH_OFFSET
+      e_off = b_off + B.ssz_size(@begin)
+      b_off.as(SSZ::Offset).ssz_encode(io)
+      B.ssz_encode(io, @begin)
+    {% else %}
+      if B.ssz_variable?
+        b_off = SSZ::BYTES_PER_LENGTH_OFFSET
+        e_off = b_off + @begin.ssz_size
+        b_off.as(SSZ::Offset).ssz_encode(io)
+      else
+        @begin.ssz_encode(io)
+      end
+    {% end %}
+
+    {% if E.union? %}
+      e_off += SSZ::BYTES_PER_LENGTH_OFFSET
+      e_off.as(SSZ::Offset).ssz_encode(io)
+      E.ssz_encode(io, @end)
+    {% else %}
+      if E.ssz_variable?
+        e_off += SSZ::BYTES_PER_LENGTH_OFFSET
+        b_off.as(SSZ::Offset).ssz_encode(io)
+      else
+        @end.ssz_encode(io)
+      end
+    {% end %}
+
+    if B.ssz_variable?
+      {% if B.union? %}
+        B.ssz_encode(io, @begin)
+      {% else %}
+        @begin.ssz_encode(io)
+      {% end %}
+    end
+    if E.ssz_variable?
+      {% if E.union? %}
+        E.ssz_encode(io, @end)
+      {% else %}
+        @end.ssz_encode(io)
+      {% end %}
+    end
+
+    @exclusive.ssz_encode(io)
+  end
+
+  def self.ssz_decode(io : IO, size : Int32)
+    if B.ssz_fixed?
+      if E.ssz_fixed?
+        new(B.ssz_decode(io, 0), E.ssz_decode(io, 0), Bool.ssz_decode(io, 1))
+      else
+        b = B.ssz_decode(io, 0)
+        e_off = SSZ::Offset.ssz_decode(io, SSZ::BYTES_PER_LENGTH_OFFSET)
+        e_size = size - e_off
+        e_size = 0 if e_size < 0
+        e = E.ssz_decode(io, e_size)
+        new(b, e, Bool.ssz_decode(io, 1))
+      end
+    else
+      if E.ssz_fixed?
+        b_off = SSZ::Offset.ssz_decode(io, SSZ::BYTES_PER_LENGTH_OFFSET)
+        e = E.ssz_decode(io, 0)
+        b_size = size - b_off
+        b_size = 0 if b_size < 0
+        b = B.ssz_decode(io, b_size)
+        new(b, e, Bool.ssz_decode(io, 1))
+      else
+        b_off = SSZ::Offset.ssz_decode(io, SSZ::BYTES_PER_LENGTH_OFFSET)
+        e_off = SSZ::Offset.ssz_decode(io, SSZ::BYTES_PER_LENGTH_OFFSET)
+        b_size = e_off - b_off
+        e_size = size - e_off
+        e_size = 0 if e_size < 0
+        b = B.ssz_decode(io, b_size)
+        e = E.ssz_decode(io, e_size)
+        new(b, e, Bool.ssz_decode(io, 1))
+      end
+    end
+  end
+end
+
 class String
   def self.ssz_basic? : Bool
     false
