@@ -41,15 +41,39 @@ decoded = Person.ssz_decode(encoded)
 
 - Nil
 - Bool
-- Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64
-- Enum - supports underlying type
+- Int8
+- UInt8
+- Int16
+- UInt16
+- Int32
+- UInt32
+- Int64
+- UInt64
+- Int128
+- UInt128
+- Float32
+- Float64
+- BigDecimal
+- BigFloat
+- BigInt
+- BigRational
+- Complex - serialize as pair of `Float64` (*real* and *imag*)
+- Enum - supports underlying types
 - Char - Unicode 4 bytes
 - String - supports Unicode
 - Union(T) - where `T` is supported type
 - Array(T) - where `T` is supported type
+- Deque(T) - where `T` is supported type
 - StaticArray(T) - where `T` is supported type
 - Slice(T) - where `T` is supported type
 - Set(T) - where `T` is supported type
+- Range(B, E) - where `B` and `E` are supported types
+- Time - serialize as `Int64` UTC timestamp
+- Time::Span - serialize as pair of `Int64` (*seconds*) and `Int32` (*nanoseconds*)
+- URI - serialize as `String`
+- UUID - serialize as `String`
+- SemanticVersion - serialize as `String`
+- SemanticVersion::Prerelease - serialize as `String`
 - Class and Struct which includes `SSZ::Serializable` see example above
 
 ## Contributing
